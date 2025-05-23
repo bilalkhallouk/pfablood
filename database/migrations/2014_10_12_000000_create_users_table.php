@@ -15,12 +15,16 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('role')->default('donor');
-            $table->string('phone', 20)->nullable();
-            $table->string('cin', 20)->nullable();
-            $table->integer('age')->nullable();
-            $table->dateTime('last_donation_at')->nullable();
+            $table->enum('role', ['admin', 'donor', 'patient'])->default('patient');
+            $table->string('blood_type')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('location')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
+            $table->timestamp('last_donation_at')->nullable();
+            $table->rememberToken();
             $table->timestamps();
         });
     }
