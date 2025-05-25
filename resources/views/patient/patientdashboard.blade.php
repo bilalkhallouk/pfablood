@@ -87,10 +87,24 @@
                         @csrf
                         <div class="mb-3">
                             <label class="form-label">Groupe sanguin requis</label>
-                            <select class="form-select" name="blood_type" required>
-                                <option value="">Sélectionnez le groupe sanguin</option>
-                                @foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $type)
-                                    <option value="{{ $type }}">{{ $type }}</option>
+                            <input type="text" class="form-control" value="{{ Auth::user()->blood_type }}" readonly style="background-color: #e0f7fa; color: #00796b; font-weight: bold;">
+                            <input type="hidden" name="blood_type" value="{{ Auth::user()->blood_type }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ville</label>
+                            <select name="city" id="city" class="form-select" required>
+                                <option value="">Sélectionnez la ville</option>
+                                @foreach($cities as $city)
+                                    <option value="{{ $city }}">{{ $city }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Centre de don</label>
+                            <select name="center_id" id="center" class="form-select" required style="display:none;">
+                                <option value="">Sélectionnez le centre</option>
+                                @foreach($centers as $center)
+                                    <option value="{{ $center->id }}" data-city="{{ $center->city }}">{{ $center->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -108,7 +122,7 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Télécharger l’ordonnance</label>
+                            <label class="form-label">Télécharger l'ordonnance</label>
                             <input type="file" class="form-control" name="prescription" accept=".pdf,.jpg,.jpeg,.png">
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Soumettre la demande</button>
@@ -251,5 +265,47 @@
     border-radius: 15px;
 }
 </style>
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var citySelect = document.getElementById('city');
+    var centerSelect = document.getElementById('center');
+    var centerWrapper = centerSelect.closest('.mb-3');
+    if(citySelect && centerSelect) {
+        function filterCenters() {
+            var city = citySelect.value.trim().toLowerCase();
+            var hasCity = !!city;
+            var hasVisible = false;
+            Array.from(centerSelect.options).forEach(function(option) {
+                if (!option.value) {
+                    option.style.display = '';
+                    return;
+                }
+                var optionCity = (option.getAttribute('data-city') || '').trim().toLowerCase();
+                // Debug log
+                console.log('Comparing selected city:', city, 'with center city:', optionCity, '| Center:', option.textContent);
+                var show = hasCity && optionCity === city;
+                option.style.display = show ? '' : 'none';
+                if (show) hasVisible = true;
+            });
+            centerSelect.style.display = hasCity ? '' : 'none';
+            let msg = centerWrapper.querySelector('.no-centers-msg');
+            if (msg) msg.remove();
+            if (hasCity && !hasVisible) {
+                let m = document.createElement('div');
+                m.className = 'no-centers-msg text-danger mt-2';
+                m.textContent = 'Aucun centre disponible pour cette ville.';
+                centerWrapper.appendChild(m);
+            }
+            centerSelect.value = '';
+        }
+        citySelect.addEventListener('change', filterCenters);
+        // Initial filter on page load
+        filterCenters();
+    }
+});
+</script>
+@endsection
 
 @endsection 

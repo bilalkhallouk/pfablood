@@ -134,6 +134,13 @@
                                 Demandes de sang
                             </a>
                         </div>
+                        <div class="col-md-3">
+                            <a href="{{ route('admin.blood-stocks.index') }}" class="btn btn-outline-danger w-100 p-4">
+                                <i class="fas fa-tint fa-drop mb-2 fa-2x"></i>
+                                <br>
+                                Gestion du stock de sang
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

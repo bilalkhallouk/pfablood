@@ -23,15 +23,35 @@
                             <th>Urgence</th>
                             <th>Status</th>
                             <th>Date</th>
+                            <th>Ordonnance</th>
+                            <th>Stock</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($requests as $request)
+                        @php
+                            $stock = \App\Models\BloodStock::where('center_id', $request->center_id ?? null)
+                                ->where('blood_type', $request->blood_type)
+                                ->first();
+                            $stockUnits = $stock->units ?? $stock->units_available ?? 0;
+                            $canAccept = $stockUnits >= $request->units_needed;
+                        @endphp
                         <tr>
                             <td>{{ $request->user->name ?? '-' }}</td>
                             <td>{{ $request->blood_type }}</td>
-                            <td>{{ $request->units_needed }}</td>
+                            <td>
+                                <span class="fw-bold">{{ $request->units_needed }} unités demandées</span>
+                                <br>
+                                @if($stock)
+                                    <small>
+                                        <span class="text-muted">Stock: {{ $stockUnits }}</span>
+                                        <span class="badge {{ $canAccept ? 'bg-success' : 'bg-danger' }} ms-1">{{ $canAccept ? 'OK' : 'Bas' }}</span>
+                                    </small>
+                                @else
+                                    <span class="text-danger">Aucune donnée</span>
+                                @endif
+                            </td>
                             <td>{{ ucfirst($request->urgency) }}</td>
                             <td>
                                 <span class="badge bg-{{ $request->status == 'approved' ? 'success' : ($request->status == 'pending' ? 'warning' : ($request->status == 'rejected' ? 'danger' : 'secondary')) }}">
@@ -40,15 +60,53 @@
                             </td>
                             <td>{{ $request->created_at->format('d/m/Y H:i') }}</td>
                             <td>
+                                @if($request->prescription_file)
+                                    <a href="{{ asset('storage/' . $request->prescription_file) }}" target="_blank">Voir l'ordonnance</a>
+                                @else
+                                    <span class="text-muted">Aucune</span>
+                                @endif
+                            </td>
+                            <td>
                                 @if($request->status == 'pending')
-                                <form action="{{ route('admin.blood-requests.accept', $request->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-success btn-sm">Accepter</button>
-                                </form>
-                                <form action="{{ route('admin.blood-requests.reject', $request->id) }}" method="POST" class="d-inline ms-1">
-                                    @csrf
-                                    <button type="submit" class="btn btn-danger btn-sm">Rejeter</button>
-                                </form>
+                                    <!-- Accept Button with Modal -->
+                                    <button 
+                                        class="btn btn-success btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#acceptModal{{ $request->id }}"
+                                        @if(!$canAccept) disabled title="Stock insuffisant" @endif
+                                    >
+                                        Accepter
+                                    </button>
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="acceptModal{{ $request->id }}" tabindex="-1" aria-labelledby="acceptModalLabel{{ $request->id }}" aria-hidden="true">
+                                      <div class="modal-dialog">
+                                        <div class="modal-content">
+                                          <form action="{{ route('admin.blood-requests.accept', $request->id) }}" method="POST">
+                                            @csrf
+                                            <div class="modal-header">
+                                              <h5 class="modal-title" id="acceptModalLabel{{ $request->id }}">Confirmer l'acceptation</h5>
+                                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                              Voulez-vous vraiment accepter cette demande ?<br>
+                                              <strong>Stock disponible :</strong> {{ $stockUnits }} unités<br>
+                                              <strong>Demandé :</strong> {{ $request->units_needed }} unités
+                                              @if(!$canAccept)
+                                                <div class="alert alert-danger mt-2">Stock insuffisant !</div>
+                                              @endif
+                                            </div>
+                                            <div class="modal-footer">
+                                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                              <button type="submit" class="btn btn-success" @if(!$canAccept) disabled @endif>Confirmer</button>
+                                            </div>
+                                          </form>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <form action="{{ route('admin.blood-requests.reject', $request->id) }}" method="POST" class="d-inline ms-1">
+                                        @csrf
+                                        <button type="submit" class="btn btn-danger btn-sm">Rejeter</button>
+                                    </form>
                                 @else
                                     <span class="text-muted">-</span>
                                 @endif

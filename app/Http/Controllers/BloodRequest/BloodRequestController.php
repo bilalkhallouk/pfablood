@@ -31,7 +31,8 @@ class BloodRequestController extends Controller
             'units_needed' => $request->units_needed,
             'urgency' => $request->urgency,
             'prescription_file' => $prescriptionPath,
-            'status' => 'pending'
+            'status' => 'pending',
+            'city' => $request->city,
         ]);
 
         return redirect()->back()->with('success', 'Blood request submitted successfully!');

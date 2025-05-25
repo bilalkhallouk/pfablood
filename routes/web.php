@@ -93,6 +93,9 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/blood-stock/{bloodStock}', [App\Http\Controllers\Admin\BloodStockController::class, 'update'])->name('blood-stock.update');
         Route::post('/blood-stock/update-all', [App\Http\Controllers\Admin\BloodStockController::class, 'updateAll'])->name('blood-stock.update-all');
 
+        // Add resource route for blood stocks
+        Route::resource('blood-stocks', App\Http\Controllers\Admin\BloodStockController::class);
+
         // Blood Requests Management
         Route::get('/blood-requests', [App\Http\Controllers\Admin\BloodRequestController::class, 'index'])->name('blood-requests');
         Route::post('/blood-requests/{id}/accept', [App\Http\Controllers\Admin\BloodRequestController::class, 'accept'])->name('blood-requests.accept');
@@ -151,7 +154,9 @@ Route::middleware(['auth', 'role:patient'])->group(function () {
             'recentRequests' => \App\Models\BloodRequest::where('user_id', Auth::id())
                 ->latest()
                 ->take(5)
-                ->get()
+                ->get(),
+            'cities' => \App\Models\Center::select('city')->distinct()->pluck('city'),
+            'centers' => \App\Models\Center::all(),
         ];
         return view('patient.patientdashboard', $data);
     })->name('patient.dashboard');

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\BloodRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Mail\BloodRequestToAdmin;
+use Illuminate\Support\Facades\Mail;
 
 class BloodRequestController extends Controller
 {
@@ -23,13 +25,18 @@ class BloodRequestController extends Controller
         $bloodRequest->units_needed = $validated['units_needed'];
         $bloodRequest->urgency = $validated['urgency'];
         $bloodRequest->status = 'pending';
+        $bloodRequest->city = $request->input('city');
 
         if ($request->hasFile('prescription')) {
             $path = $request->file('prescription')->store('prescriptions', 'public');
-            $bloodRequest->prescription_url = $path;
+            $bloodRequest->prescription_file = $path;
         }
 
         $bloodRequest->save();
+
+        // Send email to admin with ordonnance attached
+        $adminEmail = 'admin@example.com'; // Change to your admin's email
+        Mail::to($adminEmail)->send(new BloodRequestToAdmin($bloodRequest));
 
         return redirect()->back()->with('success', 'Blood request submitted successfully!');
     }

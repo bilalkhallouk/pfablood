@@ -49,4 +49,9 @@ class Center extends Model
         
         return $formatted;
     }
+
+    public function bloodStocks()
+    {
+        return $this->hasMany(\App\Models\BloodStock::class);
+    }
 } 
